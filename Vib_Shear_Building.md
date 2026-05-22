@@ -60,7 +60,8 @@ Joinville
 3. [Resultados](#3-resultados)
 4. [Conclusão](#4-conclusão)
 5. [Apêndice](#5-apêndice)
-   - 5.1 [Código — Python ](#51-código--cálculo-dos-cps-e-cd-e-geração-dos-gráficos)
+   - 5.1 [Código — Python](#51-codigo--python)
+   - 5.2 [Código — Mat Lab](#52-codigo--matlab)
 6. [Referências](#6-referências)
 
 </div>
@@ -105,9 +106,11 @@ Joinville
 
 ## 1 Introdução
 
-A Análise de Vibrações é um ramo da engenharia que tem como finalidade a obtenção dos parâmetros modais de uma estrutura – frequência natural, amortecimento e modos de vibração – por meio da análise de seu comportamento vibratório em resposta às forças externas que atuam sobre ela. Existem inúmeros métodos para obter esses parâmetros.
+A Análise de Vibrações é uma vertente fundamental da engenharia que visa determinar os parâmetros modais de um sistema — especificamente suas frequências naturais, modos de vibrar e coeficientes de amortecimento. A identificação precisa dessas propriedades é indispensável para prever a resposta dinâmica de sistemas estruturais quando submetidos a excitações externas, permitindo mitigar os efeitos destrutivos de fenômenos como a ressonância e a fadiga mecânica.
 
-<!-- seja utilizando dados de entrada e saída, ou somente dados de saída da estrutura em estudo. Em geral, esse tipo de análise é vantajoso porque não danifica a estrutura e permite a captação de dados com a estrutura em funcionamento. -->
+No escopo da dinâmica estrutural, o modelo *Shear Building* (Edifício de Cisalhamento) constitui uma idealização analítica consagrada para a simplificação do comportamento de estruturas de múltiplos pavimentos. Sob essa formulação, adota-se a hipótese de que as lajes e vigas apresentam rigidez à flexão infinitamente superior à dos pilares de sustentação. Como consequência direta dessa premissa, os deslocamentos rotacionais e verticais dos nós são desprezados, restringindo o movimento da estrutura a translações estritamente horizontais em cada nível de massa.
+
+Dessa forma, o edifício é discretizado como um sistema de Múltiplos Graus de Liberdade (MGL), no qual a massa de cada pavimento é considerada concentrada no nível da laje e as colunas atuam como elementos elétricos de ligação (molas) que oferecem resistência ao cisalhamento horizontal. O presente trabalho documenta o desenvolvimento da modelagem matricial e computacional de um modelo *Shear Building* de quatro andares, com foco na extração de suas frequências naturais e formas modais via formulação em espaço de estados, estabelecendo os fundamentos analíticos necessários para a avaliação do comportamento dinâmico da estrutura.
 
 </div>
 
@@ -121,33 +124,35 @@ A Análise de Vibrações é um ramo da engenharia que tem como finalidade a obt
 
 ## 2 Metodologia
 
-Nos realizamos os primeiro estudo utilizando python para clarificar a ordem de resolução do problema depois seguimos com a realização de casos utilizando o MatLab por fim seguimos realizando algumas simulações dentro Simcenter Femap para exemplificar os processos desenvolvidos nesse texto
+Realizamos o primeiro estudo utilizando Python para clarificar a ordem de resolução do problema, focando na montagem automática das matrizes do sistema. A equação que rege o movimento de um sistema MGL sob vibração livre é dada por:
 
-</div><br><br>
+</div>
 
-<!-- Equação centralizada -->
 <div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
 
-$$ \mu = \frac{1{,}485 \times 10^{-6} \, T}{1 + \left(\dfrac{110{,}4}{T}\right)} \tag{1.0}$$
-</div><br><br>
+$$M\ddot{x}(t) + C\dot{x}(t) + Kx(t) = 0 \tag{2.1}$$
 
-<!-- Tabela 1 centralizada -->
-<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
-
-**Tabela 1: Velocidades e Reynolds do Ensaio**
-| Velocidade [m/s] | Densidade do ar [kg/m³] | Re |
-|:-:|:-:|:-:|
-| 7,7 | 1,32 | 8,28E04 |
-| 4,1 | 1,49 | 5,00E04 |
-| 1,8 | 1,73 | 2,55E04 |
-</div><br><br>
-
+</div>
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-Foi implementado um script em Python a fim de calcular os C<sub>P</sub>'s para cada uma das 20 leituras ao longo da meia circunferência do cilindro, nos três casos de velocidade. Em seguida, foram obtidos os valores médios para cada ponto analisado do cilindro.
+Onde $M$ é a matriz de massa, $C$ é a matriz de amortecimento, $K$ é a matriz de rigidez e $x(t)$ é o vetor de deslocamentos. Para simplificar a análise inicial (conforme o código no Apêndice 5.1), a matriz de amortecimento foi considerada nula ($C = 0$).
 
-Uma vez obtida a distribuição de C<sub>P</sub> ao longo do cilindro, foi possível calcular o Coeficiente de Arrasto C<sub>D</sub> do mesmo. Analogamente à solução analítica do C<sub>D</sub>, foi realizada uma integração numérica dos valores C<sub>P</sub> cos(θ) em cada respectivo θ, utilizando o método do trapézio.
+A construção da matriz de rigidez global $K$ foi implementada utilizando o conceito de conectividade, similar ao Método dos Elementos Finitos (MEF). Define-se uma matriz de rigidez local para cada andar e, com base em uma matriz de nós (onde o nó 0 representa o solo fixo), os valores são somados nas posições globais correspondentes. O nó 0 tem seu grau de liberdade eliminado no código (`free_dof = total_dof[1:]`), garantindo a condição de contorno de engastamento na base.
+
+Para encontrar as frequências naturais e os modos de vibração computacionalmente, convertemos o sistema de equações diferenciais de segunda ordem em um sistema de primeira ordem utilizando a representação em espaço de estados, onde a matriz de estado $Q$ é definida como:
+
+</div>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$Q = \begin{bmatrix} 0 & I \\ -M^{-1}K & -M^{-1}C \end{bmatrix} \tag{2.2}$$
+
+</div>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+Após o equacionamento em Python, o problema de autovalores e autovetores foi solucionado utilizando a função `eig(Q)` da biblioteca `numpy.linalg`.
 
 </div>
 
@@ -159,49 +164,13 @@ Uma vez obtida a distribuição de C<sub>P</sub> ao longo do cilindro, foi poss�
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-## 3 Resultados
+## 3 Resultados e Implicações Físicas
 
-Após a integração, foram obtidos os C<sub>D</sub>'s do cilindro em cada caso, apresentados na Tabela 2. Os valores de C<sub>P</sub> obtidos são mostrados a partir da Figura 1, juntamente com o desvio padrão das leituras em cada ponto, comparando com a previsão analítica do escoamento potencial, dada pela expressão C<sub>P</sub> = 2cos(2θ) − 1.
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum
 
-</div>
-
-<!-- Tabela 2 centralizada -->
-<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
-
-**Tabela 2: Resultados — C<sub>D</sub>**
-
-| Velocidade [m/s] | 7,7 | 4,1 | 1,8 |
-|:-:|:-:|:-:|:-:|
-| C<sub>D</sub> | 0,629 | 0,744 | 0,612 |
 
 </div>
 
-<!-- Figura 1 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_1.png" alt="Distribuição de CP - 7,7 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 1: Distribuição de C<sub>P</sub> — 7,7 m/s</em>
-  </span>
-</div>
-
-<!-- Figura 2 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_2.png" alt="Distribuição de CP - 4,1 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 2: Distribuição de C<sub>P</sub> — 4,1 m/s</em>
-  </span>
-</div>
-
-<!-- Figura 3 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_3.png" alt="Distribuição de CP - 1,8 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 3: Distribuição de C<sub>P</sub> — 1,8 m/s</em>
-  </span>
-</div>
 
 ---
 
@@ -213,47 +182,8 @@ Após a integração, foram obtidos os C<sub>D</sub>'s do cilindro em cada caso,
 
 ## 4 Conclusão
 
-Nos gráficos obtidos no experimento, é possível perceber que a distribuição de C<sub>P</sub> obtida experimentalmente difere de forma significativa do proposto pelo modelo potencial. Isso se dá devido a uma hipótese base do mesmo: a hipótese de inviscidade citada anteriormente. Como a viscosidade ainda é presente, apesar de pequena no caso do ar, o escoamento perde energia conforme percorre a superfície do cilindro devido ao atrito viscoso, até o ponto em que ocorre o descolamento da camada limite.
+Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum
 
-Além disso, também é possível notar que quanto mais laminar é o escoamento, mais a distribuição de C<sub>P</sub>'s difere do proposto pelo modelo potencial, tendendo a "planificar" cada vez mais cedo. Tal fenômeno pode ser explicado pela própria definição do número de Reynolds: quanto menor ele é, mais os efeitos viscosos predominam, fugindo do modelo potencial. Esse comportamento é coerente com a previsão experimental apresentada por Munson (MUNSON; OKIISHI; YOUNG, 1997).
-
-</div>
-
-<!-- Figura 4 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_4.png" alt="Previsão experimental da distribuição de CP" width="360"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 4: Previsão experimental da distribuição de C<sub>P</sub></em>
-  </span>
-</div>
-
-<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
-
-Pode-se perceber também que os valores de C<sub>D</sub> ficaram abaixo da previsão experimental para um cilindro liso. Acredita-se que as tomadas de pressão ao longo do cilindro, junto com os geradores de vórtice colocados no mesmo, tenham causado tal discrepância com a previsão experimental, também apresentada por Munson.
-
-</div>
-
-<!-- Tabela 3 centralizada -->
-<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
-
-**Tabela 3: Erro relativo — Previsão x Experimento**
-
-| Reynolds | 8,28E04 | 5,00E04 | 2,55E04 |
-|:-:|:-:|:-:|:-:|
-| Erro relativo* | 58,1% | 50,4% | 59,2% |
-
-<span style="font-size: 10pt;">* Erro aproximado, considerado C<sub>D</sub> previsto como 1,5</span>
-
-</div>
-
-<!-- Figura 5 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_5.png" alt="Previsão experimental - CD" width="420"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 5: Previsão experimental — C<sub>D</sub></em>
-  </span>
 </div>
 
 ---
@@ -264,108 +194,62 @@ Pode-se perceber também que os valores de C<sub>D</sub> ficaram abaixo da previ
 
 ## 5 Apêndice
 
-### 5.1 Código — Cálculo dos Cp's e Cd, e geração dos gráficos
+### 5.1 Codigo — Python
 
 ```python
-import pandas as pd
 import numpy as np
-import scipy as sci
-import matplotlib.pyplot as plt
+from numpy.linalg import inv,eig
 
-def Reynolds(rho, v, D, mu):
-    return rho * float(v) * D / mu
+## DEFINIÇÕES
+m1 = m2 = m3 = m4 = 1
+k1 = k2 = k3 = k4 = 1
 
-def Cp_analitico(theta):
-    return 2 * np.cos(2 * theta) - 1
+## MATRIZ DE MASSA + MATRIX
+m_n = np.array([m1, m2, m3, m4])
+M = np.diag(m_n)
+n_massas = len(m_n)
 
-def Solve(data, v):
-    P_med = []
-    Cp_med = []
-    Desv_pad = []
+## MATRIZ DE AMORTECIMENTO
+Z = np.zeros([n_massas,n_massas])
+C = Z
 
-    for col in data:
-        P_med.append(data[col].mean())  # Obtendo os valores médios de pressão
+## MATRIZ DE CONECTIVIDADE (INPUT)
+conectividade = np.array([[0,1],
+                         [1,2],
+                         [2,3],
+                         [3,4]])
 
-    rho = densidade(P_med[0], v)  # Cálculo da densidade do ar
 
-    for col in data:
-        Cp = []
-        for i in range(len(data)):
-            Cp.append(2 * data.loc[i, col] / (rho * float(v)**2))
-        Cp_med.append(np.mean(Cp))
-        Desv_pad.append(np.std(Cp))
+k_n = np.array([k1,k2,k3,k4])
+K = np.zeros([n_massas+1,n_massas+1])
 
-    Cp_med = np.array(Cp_med)
-    Desv_pad = np.array(Desv_pad)
+## MATRIZ DE RIGIDIZ GLOBAL SE BASEA NA CONECTIVIDADERIGIDEZ 
+for k , elemento in zip(k_n,conectividade):
+    k_local = np.array([[k , -k],
+                       [-k , k]])
+    K[np.ix_(elemento,elemento)] += k_local
+total_dof = np.arange(0,n_massas+1, 1)
 
-    return Cp_med, Desv_pad, rho
+## ELIMINANDO O GRAU ZERO, QUE FOI CONSIDERADO O CHÃO
+free_dof = total_dof[1:]
+K = K[np.ix_(free_dof,free_dof)]
 
-def densidade(p, v):
-    rho = 2 * p / float(v)**2
-    print("Densidade do ar " + v + " m/s = ", rho)
-    return rho
-
-def graph(Cp_med, Desv_pad, x_rad, x, v, Re, rho, CD):
-    y_analitico = [Cp_analitico(theta) for theta in x_rad]
-    y_analitico = np.array(y_analitico)
-
-    plt.plot(x, y_analitico, color='red', label='Cp analítico')
-    plt.title("Vel = " + v + " m/s", fontweight='bold')
-    plt.ylabel("Cp", rotation=0, labelpad=10, fontweight='bold')
-    plt.xlabel("(°)", fontweight='bold')
-    plt.errorbar(x, Cp_med, Desv_pad, fmt='o', capsize=7,
-                 markersize=4, label='Cp experimental')
-    plt.legend()
-    plt.text(0.025, 0.17, f'rho = {rho:.2f} kg/m³',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.text(0.025, 0.24, f'Re = {Re:.2e}',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.text(0.025, 0.31, f'CD = {CD:.3f}',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.savefig("Gráfico - " + v + ".png", dpi=300)
-    plt.show()
-
-if __name__ == '__main__':
-    arquivos = ["Vel7.7.csv", "Vel4.1.csv", "Vel1.8.csv"]
-    vel = ["7.7", "4.1", "1.8"]
-    mu = 1.837E-05   # Viscosidade dinâmica [Pa·s]
-    D = 0.15         # Diâmetro do cilindro [m]
-
-    for adress, v in zip(arquivos, vel):
-        data = pd.read_csv(adress)
-        theta = [float(d.removesuffix('°')) for d in data]
-        theta_rad = np.deg2rad(theta)
-
-        Cp_medio, Desvio_padrao, rho = Solve(data, v)
-        Re = Reynolds(rho, v, D, mu)
-        print("Re = ", format(Re, ".2e"))
-
-        CD = sci.integrate.trapezoid(Cp_medio * np.cos(theta_rad), theta_rad)
-        print("CD " + v + " m/s = ", CD, "\n")
-
-        graph(Cp_medio, Desvio_padrao, theta_rad, theta, v, Re, rho, CD)
+## AUTOVALORES E AUTOVETORES
+I = np.identity(n_massas)
+Q = np.block([[Z , I],
+             [-inv(M) @ K , -inv(M) @ C]])
+    
+autovalores, autovetores = eig(Q)
+print(autovalores,autovetores)
 ```
 
+### 5.2 Codigo — MatLab
+```MATLAB
+x = 0:pi/100:2*pi;
+y = sin(x);
+plot(x,y)
+title('Gráfico da função Seno')
+xlabel('x')
+ylabel('sin(x)')
+```
 ---
-
-<!-- ╔══════════════════════════════════╗ -->
-<!-- ║          6. REFERÊNCIAS          ║ -->
-<!-- ╚══════════════════════════════════╝ -->
-
-<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.8;">
-
-## 6 Referências
-
-ANDERSON, J. **Fundamentals of Aerodynamics**. McGraw-Hill Companies, 2017. (McGraw-Hill Aeronautical and Aerospace Engineering Series). ISBN 9780070016804.
-
-MUNSON, B.; OKIISHI, T.; YOUNG, D. **Fundamentos da mecânica dos fluidos**. Edgard Blucher, 1997. ISBN 9788521201427.
-
-SADRAEY, M. **Aircraft Performance: An Engineering Approach**. CRC Press, 2017. ISBN 9781498776554.
-
-</div>
