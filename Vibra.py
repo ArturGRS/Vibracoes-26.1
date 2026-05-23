@@ -1,7 +1,5 @@
-from glm import inverse
 import numpy as np
 from numpy.linalg import inv,eig
-
 
 m1 = 1
 m2 = 1
@@ -51,4 +49,12 @@ Q = np.block([[Z , I],
 
 autovalores, autovetores = eig(Q)
 
-print(autovalores,autovetores)
+indices_validos = np.where(autovalores.imag > 0)[0]
+indices_ordenados = indices_validos[np.argsort(np.abs(autovalores[indices_validos]))]
+
+w_n = np.abs(autovalores[indices_ordenados])
+modo = np.abs(autovetores[0:n_massas,indices_ordenados])
+
+for i, valor in enumerate(w_n):
+    print(f"Modo {i+1} = {modo[:,i]} \n frequencia natural = {valor}\n ")
+    
