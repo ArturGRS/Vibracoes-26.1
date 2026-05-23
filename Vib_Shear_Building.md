@@ -46,7 +46,6 @@ Joinville
 </div>
 
 ---
-
 <!-- ╔══════════════════════════════════╗ -->
 <!-- ║           SUMÁRIO                ║ -->
 <!-- ╚══════════════════════════════════╝ -->
@@ -57,43 +56,18 @@ Joinville
 
 1. [Introdução](#1-introdução)
 2. [Metodologia](#2-metodologia)
-3. [Resultados](#3-resultados)
-4. [Conclusão](#4-conclusão)
-5. [Apêndice](#5-apêndice)
-   - 5.1 [Código — Python ](#51-código--cálculo-dos-cps-e-cd-e-geração-dos-gráficos)
-6. [Referências](#6-referências)
+   - 2.1 [Modelo Estrutural — Shear Building](#21-modelo-estrutural--shear-building)
+   - 2.2 [Formulação Matemática](#22-formulação-matemática)
+   - 2.3 [Formulação em Espaço de Estados](#23-formulação-em-espaço-de-estados)
+   - 2.4 [Análise de Autovalores](#24-análise-de-autovalores)
+3. [Implementação Computacional](#3-implementação-computacional)
+4. [Resultados](#4-resultados)
+5. [Conclusão](#5-conclusão)
+6. [Apêndice](#6-apêndice)
+   - 6.1 [Código — Python](#61-código--python)
+7. [Referências](#7-referências)
 
 </div>
-
-<!-- ---
-
-<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt;">
-
-## Lista de Figuras
-
-| | |
-|---|---|
-| Figura 1 | Distribuição de C<sub>P</sub> — 7,7 m/s |
-| Figura 2 | Distribuição de C<sub>P</sub> — 4,1 m/s |
-| Figura 3 | Distribuição de C<sub>P</sub> — 1,8 m/s |
-| Figura 4 | Previsão experimental da distribuição de C<sub>P</sub> |
-| Figura 5 | Previsão experimental — C<sub>D</sub> |
-
-</div>
-
----
-
-<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt;">
-
-## Lista de Tabelas
-
-| | |
-|---|---|
-| Tabela 1 | Velocidades e Reynolds do Ensaio |
-| Tabela 2 | Resultados — C<sub>D</sub> |
-| Tabela 3 | Erro relativo — Previsão x Experimento |
-
-</div> -->
 
 ---
 
@@ -105,9 +79,11 @@ Joinville
 
 ## 1 Introdução
 
-A Análise de Vibrações é um ramo da engenharia que tem como finalidade a obtenção dos parâmetros modais de uma estrutura – frequência natural, amortecimento e modos de vibração – por meio da análise de seu comportamento vibratório em resposta às forças externas que atuam sobre ela. Existem inúmeros métodos para obter esses parâmetros.
+A Análise de Vibrações é um ramo da engenharia que tem como finalidade a obtenção dos parâmetros modais de uma estrutura — frequência natural, amortecimento e modos de vibração — por meio da análise de seu comportamento vibratório em resposta às forças externas que atuam sobre ela. Existem inúmeros métodos para obter esses parâmetros, seja utilizando dados de entrada e saída, ou somente dados de saída da estrutura em estudo. Em geral, esse tipo de análise é vantajoso porque não danifica a estrutura e permite a captação de dados com a estrutura em funcionamento.
 
-<!-- seja utilizando dados de entrada e saída, ou somente dados de saída da estrutura em estudo. Em geral, esse tipo de análise é vantajoso porque não danifica a estrutura e permite a captação de dados com a estrutura em funcionamento. -->
+No contexto da engenharia civil e sísmica, o modelo de **Shear Building** (edifício cisalhante) é amplamente utilizado para representar o comportamento dinâmico lateral de edificações de múltiplos andares. Trata-se de uma idealização que concentra as massas nos pisos e representa a rigidez lateral das colunas como molas lineares, permitindo uma análise modal eficiente com boa acurácia para as primeiras frequências naturais da estrutura.
+
+O presente trabalho descreve a formulação teórica e a implementação computacional da análise modal de um shear building de 4 andares utilizando a linguagem Python. O problema é formulado no espaço de estados, e os parâmetros modais — frequências naturais e formas modais — são obtidos por meio da decomposição em autovalores e autovetores da matriz de estado do sistema.
 
 </div>
 
@@ -121,251 +97,471 @@ A Análise de Vibrações é um ramo da engenharia que tem como finalidade a obt
 
 ## 2 Metodologia
 
-Nos realizamos os primeiro estudo utilizando python para clarificar a ordem de resolução do problema depois seguimos com a realização de casos utilizando o MatLab por fim seguimos realizando algumas simulações dentro Simcenter Femap para exemplificar os processos desenvolvidos nesse texto
+### 2.1 Modelo Estrutural — Shear Building
 
-</div><br><br>
+O modelo de shear building é uma idealização estrutural baseada nas seguintes hipóteses:
 
-<!-- Equação centralizada -->
+- As **massas** são concentradas nos pisos (lajes), representando a inércia translacional de cada andar;
+- As **lajes são infinitamente rígidas**, de modo que não há rotação relativa entre os nós;
+- A **rigidez lateral** de cada conjunto de colunas entre dois andares é representada por uma mola linear equivalente de rigidez $k_i$;
+- O sistema possui apenas **graus de liberdade translacionais** horizontais.
+
+A estrutura modelada possui 4 andares e base fixa, conforme a Figura 1. Os nós são numerados de 0 (base fixa) a 4 (topo). A condição de contorno de base fixa elimina o grau de liberdade do nó 0, resultando em um sistema com **4 graus de liberdade** livres.
+
+---
+
+### 2.2 Formulação Matemática
+
+A equação de movimento do sistema discreto com $n$ graus de liberdade é:
+
+</div>
+
+<br>
+
 <div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
 
-$$ \mu = \frac{1{,}485 \times 10^{-6} \, T}{1 + \left(\dfrac{110{,}4}{T}\right)} \tag{1.0}$$
-</div><br><br>
+$$\mathbf{M}\ddot{\mathbf{x}} + \mathbf{C}\dot{\mathbf{x}} + \mathbf{K}\mathbf{x} = \mathbf{f}(t) \tag{2.1}$$
 
-<!-- Tabela 1 centralizada -->
-<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
+</div>
 
-**Tabela 1: Velocidades e Reynolds do Ensaio**
-| Velocidade [m/s] | Densidade do ar [kg/m³] | Re |
-|:-:|:-:|:-:|
-| 7,7 | 1,32 | 8,28E04 |
-| 4,1 | 1,49 | 5,00E04 |
-| 1,8 | 1,73 | 2,55E04 |
-</div><br><br>
-
+<br>
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-Foi implementado um script em Python a fim de calcular os C<sub>P</sub>'s para cada uma das 20 leituras ao longo da meia circunferência do cilindro, nos três casos de velocidade. Em seguida, foram obtidos os valores médios para cada ponto analisado do cilindro.
+onde $\mathbf{M}$, $\mathbf{C}$ e $\mathbf{K}$ são as matrizes de massa, amortecimento e rigidez; $\mathbf{x}$ é o vetor de deslocamentos nodais; e $\mathbf{f}(t)$ é o vetor de forças externas.
 
-Uma vez obtida a distribuição de C<sub>P</sub> ao longo do cilindro, foi possível calcular o Coeficiente de Arrasto C<sub>D</sub> do mesmo. Analogamente à solução analítica do C<sub>D</sub>, foi realizada uma integração numérica dos valores C<sub>P</sub> cos(θ) em cada respectivo θ, utilizando o método do trapézio.
+**Matriz de Massa** — Diagonal, com cada entrada correspondendo à massa de um andar:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{M} = \begin{bmatrix} m_1 & 0 & 0 & 0 \\ 0 & m_2 & 0 & 0 \\ 0 & 0 & m_3 & 0 \\ 0 & 0 & 0 & m_4 \end{bmatrix} \tag{2.2}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+**Matriz de Rigidez** — Montada por assembleagem de elementos locais, inspirada no Método dos Elementos Finitos. Cada mola $k_i$ que conecta os nós $i{-}1$ e $i$ contribui com uma matriz local $2 \times 2$:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{K}^{(i)}_{\text{local}} = \begin{bmatrix} k_i & -k_i \\ -k_i & k_i \end{bmatrix} \tag{2.3}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+Após a assembleagem global e a aplicação da condição de contorno de base fixa, a matriz de rigidez assume a forma **tridiagonal** típica do shear building:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{K} = \begin{bmatrix} k_1+k_2 & -k_2 & 0 & 0 \\ -k_2 & k_2+k_3 & -k_3 & 0 \\ 0 & -k_3 & k_3+k_4 & -k_4 \\ 0 & 0 & -k_4 & k_4 \end{bmatrix} \tag{2.4}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+A diagonal principal representa a rigidez de restauração de cada andar (soma das molas adjacentes). As superdiagonais e subdiagonais representam o acoplamento entre andares consecutivos — reflexo direto do fato de que cada andar interage apenas com seus vizinhos imediatos.
+
+Neste trabalho considera-se o sistema **não amortecido**: $\mathbf{C} = \mathbf{0}$.
+
+---
+
+### 2.3 Formulação em Espaço de Estados
+
+Para generalizar a análise ao caso com amortecimento arbitrário, reformula-se o sistema de segunda ordem (Eq. 2.1) como um sistema de primeira ordem equivalente. Define-se o **vetor de estado**:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{z} = \begin{Bmatrix} \mathbf{x} \\ \dot{\mathbf{x}} \end{Bmatrix} \tag{2.5}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+de modo que a equação de movimento se torna:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\dot{\mathbf{z}} = \mathbf{Q}\,\mathbf{z} \tag{2.6}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+onde $\mathbf{Q}$ é a **matriz de estado** de dimensão $2n \times 2n$:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{Q} = \begin{bmatrix} \mathbf{0} & \mathbf{I} \\ -\mathbf{M}^{-1}\mathbf{K} & -\mathbf{M}^{-1}\mathbf{C} \end{bmatrix} \tag{2.7}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+Para o sistema sem amortecimento ($\mathbf{C} = \mathbf{0}$):
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{Q} = \begin{bmatrix} \mathbf{0} & \mathbf{I} \\ -\mathbf{M}^{-1}\mathbf{K} & \mathbf{0} \end{bmatrix} \tag{2.8}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+Para o sistema de 4 graus de liberdade estudado, $\mathbf{Q}$ tem dimensão $8 \times 8$.
+
+---
+
+### 2.4 Análise de Autovalores
+
+Os parâmetros modais são obtidos pelo problema de autovalores:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{Q}\,\boldsymbol{\psi}_r = \lambda_r\,\boldsymbol{\psi}_r \tag{2.9}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+Para o sistema não amortecido, os autovalores ocorrem em pares **puramente imaginários conjugados**:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\lambda_r = \pm\, i\,\omega_r \tag{2.10}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+onde $\omega_r = |\lambda_r|$ é a **frequência natural** (rad/s) do $r$-ésimo modo. No plano complexo, esses autovalores se distribuem sobre o eixo imaginário, sem parte real — consequência direta da ausência de dissipação de energia no sistema.
+
+Para o caso amortecido, os autovalores passariam a ter **parte real negativa**:
+
+</div>
+
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\lambda_r = -\zeta_r\omega_r \pm i\,\omega_r\sqrt{1-\zeta_r^2} \tag{2.11}$$
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+permitindo extrair diretamente tanto a frequência natural amortecida quanto a razão de amortecimento $\zeta_r$.
+
+Os **autovetores** $\boldsymbol{\psi}_r$ descrevem as **formas modais**: o padrão relativo de deslocamentos de cada andar durante a vibração no modo $r$. No modo fundamental, todos os andares se movem na mesma direção com amplitudes crescentes da base ao topo. Nos modos superiores, surgem **nós de vibração** — posições de deslocamento nulo — com inversão de fase entre andares consecutivos.
 
 </div>
 
 ---
 
 <!-- ╔══════════════════════════════════╗ -->
-<!-- ║         3. RESULTADOS            ║ -->
+<!-- ║   3. IMPLEMENTAÇÃO COMPUTACIONAL ║ -->
 <!-- ╚══════════════════════════════════╝ -->
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-## 3 Resultados
+## 3 Implementação Computacional
 
-Após a integração, foram obtidos os C<sub>D</sub>'s do cilindro em cada caso, apresentados na Tabela 2. Os valores de C<sub>P</sub> obtidos são mostrados a partir da Figura 1, juntamente com o desvio padrão das leituras em cada ponto, comparando com a previsão analítica do escoamento potencial, dada pela expressão C<sub>P</sub> = 2cos(2θ) − 1.
+A implementação foi desenvolvida em Python utilizando a biblioteca NumPy para operações matriciais e o módulo `numpy.linalg` para a solução do problema de autovalores. O fluxo de implementação segue diretamente as etapas da Metodologia:
 
-</div>
+1. Definição dos parâmetros do sistema ($m_i$, $k_i$);
+2. Montagem da matriz de massa $\mathbf{M}$ diagonal;
+3. Montagem da matriz de rigidez $\mathbf{K}$ por assembleagem elemento a elemento, usando o vetor de **conectividade** para mapear cada mola na estrutura global;
+4. Aplicação da condição de contorno de base fixa (eliminação da linha e coluna do nó 0);
+5. Construção da matriz de estado $\mathbf{Q}$ em blocos;
+6. Extração dos autovalores e autovetores via `numpy.linalg.eig`.
 
-<!-- Tabela 2 centralizada -->
-<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
+A abordagem de assembleagem por conectividade, inspirada no MEF, torna o código **parametrizado e generalizável**: a simples alteração do vetor de massas, rigidezes e conectividade permite analisar estruturas com qualquer número de andares ou topologia.
 
-**Tabela 2: Resultados — C<sub>D</sub>**
-
-| Velocidade [m/s] | 7,7 | 4,1 | 1,8 |
-|:-:|:-:|:-:|:-:|
-| C<sub>D</sub> | 0,629 | 0,744 | 0,612 |
-
-</div>
-
-<!-- Figura 1 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_1.png" alt="Distribuição de CP - 7,7 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 1: Distribuição de C<sub>P</sub> — 7,7 m/s</em>
-  </span>
-</div>
-
-<!-- Figura 2 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_2.png" alt="Distribuição de CP - 4,1 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 2: Distribuição de C<sub>P</sub> — 4,1 m/s</em>
-  </span>
-</div>
-
-<!-- Figura 3 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_3.png" alt="Distribuição de CP - 1,8 m/s" width="480"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 3: Distribuição de C<sub>P</sub> — 1,8 m/s</em>
-  </span>
 </div>
 
 ---
 
 <!-- ╔══════════════════════════════════╗ -->
-<!-- ║         4. CONCLUSÃO             ║ -->
+<!-- ║         4. RESULTADOS            ║ -->
 <!-- ╚══════════════════════════════════╝ -->
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-## 4 Conclusão
+## 4 Resultados
 
-Nos gráficos obtidos no experimento, é possível perceber que a distribuição de C<sub>P</sub> obtida experimentalmente difere de forma significativa do proposto pelo modelo potencial. Isso se dá devido a uma hipótese base do mesmo: a hipótese de inviscidade citada anteriormente. Como a viscosidade ainda é presente, apesar de pequena no caso do ar, o escoamento perde energia conforme percorre a superfície do cilindro devido ao atrito viscoso, até o ponto em que ocorre o descolamento da camada limite.
-
-Além disso, também é possível notar que quanto mais laminar é o escoamento, mais a distribuição de C<sub>P</sub>'s difere do proposto pelo modelo potencial, tendendo a "planificar" cada vez mais cedo. Tal fenômeno pode ser explicado pela própria definição do número de Reynolds: quanto menor ele é, mais os efeitos viscosos predominam, fugindo do modelo potencial. Esse comportamento é coerente com a previsão experimental apresentada por Munson (MUNSON; OKIISHI; YOUNG, 1997).
+Para o caso base com todos os parâmetros unitários ($m_i = 1\,\text{kg}$, $k_i = 1\,\text{N/m}$), a matriz de rigidez global resultante após a aplicação das condições de contorno é:
 
 </div>
 
-<!-- Figura 4 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_4.png" alt="Previsão experimental da distribuição de CP" width="360"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 4: Previsão experimental da distribuição de C<sub>P</sub></em>
-  </span>
+<br>
+
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; margin: 16px 0;">
+
+$$\mathbf{K} = \begin{bmatrix} 2 & -1 & 0 & 0 \\ -1 & 2 & -1 & 0 \\ 0 & -1 & 2 & -1 \\ 0 & 0 & -1 & 1 \end{bmatrix} \tag{4.1}$$
+
 </div>
+
+<br>
 
 <div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-Pode-se perceber também que os valores de C<sub>D</sub> ficaram abaixo da previsão experimental para um cilindro liso. Acredita-se que as tomadas de pressão ao longo do cilindro, junto com os geradores de vórtice colocados no mesmo, tenham causado tal discrepância com a previsão experimental, também apresentada por Munson.
+A decomposição em autovalores da matriz de estado $\mathbf{Q}$ ($8 \times 8$) retorna 8 autovalores distribuídos em 4 pares complexos conjugados puramente imaginários, conforme esperado para um sistema não amortecido. Os autovalores obtidos foram:
 
 </div>
 
-<!-- Tabela 3 centralizada -->
+<br>
+
+<!-- Tabela de autovalores -->
 <div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
 
-**Tabela 3: Erro relativo — Previsão x Experimento**
+**Tabela 1: Autovalores da Matriz de Estado $\mathbf{Q}$**
 
-| Reynolds | 8,28E04 | 5,00E04 | 2,55E04 |
-|:-:|:-:|:-:|:-:|
-| Erro relativo* | 58,1% | 50,4% | 59,2% |
-
-<span style="font-size: 10pt;">* Erro aproximado, considerado C<sub>D</sub> previsto como 1,5</span>
+| Par | $\lambda_r$ |
+|:---:|:---:|
+| 1 | $\pm\, 0{,}3473\,i$ |
+| 2 | $\pm\, 1{,}0000\,i$ |
+| 3 | $\pm\, 1{,}5321\,i$ |
+| 4 | $\pm\, 1{,}8794\,i$ |
 
 </div>
 
-<!-- Figura 5 -->
-<div align="center" style="margin: 24px 0;">
-  <img src="figura_5.png" alt="Previsão experimental - CD" width="420"/>
-  <br>
-  <span style="font-family: 'Times New Roman', Times, serif; font-size: 11pt;">
-    <em>Figura 5: Previsão experimental — C<sub>D</sub></em>
-  </span>
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+A ausência de parte real confirma que o sistema é conservativo. As frequências naturais, períodos e formas modais normalizadas são apresentados na Tabela 2.
+
+</div>
+
+<br>
+
+<!-- Tabela de frequências -->
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
+
+**Tabela 2: Parâmetros Modais — Shear Building 4 andares ($m_i = k_i = 1$)**
+
+| Modo | $\omega_r$ [rad/s] | $f_r$ [Hz] | $T_r$ [s] |
+|:---:|:---:|:---:|:---:|
+| 1 | 0,3473 | 0,0553 | 18,09 |
+| 2 | 1,0000 | 0,1592 | 6,28 |
+| 3 | 1,5321 | 0,2438 | 4,10 |
+| 4 | 1,8794 | 0,2991 | 3,34 |
+
+</div>
+
+<br>
+
+<!-- Tabela de formas modais -->
+<div align="center" style="font-family: 'Times New Roman', Times, serif; font-size: 11pt; margin: 20px 0;">
+
+**Tabela 3: Formas Modais Normalizadas — Componentes de deslocamento por andar**
+
+| Andar | Modo 1 | Modo 2 | Modo 3 | Modo 4 |
+|:---:|:---:|:---:|:---:|:---:|
+| 1 | −0,1551 | −0,1558 |  0,3681 | −0,3473 |
+| 2 | −0,1316 | −1,0000 | −0,6605 | −0,6527 |
+| 3 | −0,6701 |  0,0278 |  0,4241 | −0,8794 |
+| 4 |  1,0000 |  0,9658 |  1,0000 | −1,0000 |
+
+</div>
+
+<br>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+As formas modais normalizadas e os autovalores no plano complexo são apresentados graficamente nas Figuras 1 e 2, respectivamente.
+
+**Figura 1** — As formas modais revelam o comportamento físico de cada modo. O **Modo 1** (fundamental) apresenta todos os andares se deslocando na mesma direção, com amplitudes crescendo monotonicamente da base ao topo — comportamento típico sob excitação sísmica de base. O **Modo 2** apresenta um nó entre os andares 2 e 3. Os **Modos 3 e 4** exibem padrões de inversão de fase progressivamente mais complexos, com amplitudes menores nos andares intermediários.
+
+**Figura 2** — No plano complexo, todos os 8 autovalores se posicionam sobre o eixo imaginário puro, distribuídos simetricamente em relação à origem. Isso é a assinatura geométrica de um sistema **hamiltoniano conservativo**: ausência total de dissipação de energia, e portanto ausência de decaimento da resposta livre.
+
+</div>
+
+<br>
+
+<div align="center">
+
+![Formas Modais](/src/fig1_modos.png)
+
+**Figura 1:** Formas modais normalizadas do shear building de 4 andares.
+
+</div>
+
+<br>
+
+<div align="center">
+
+![Autovalores no Plano Complexo](/src/fig2_autovalores.png)
+
+**Figura 2:** Distribuição dos autovalores da matriz de estado $\mathbf{Q}$ no plano complexo.
+
+</div>
+
 </div>
 
 ---
 
 <!-- ╔══════════════════════════════════╗ -->
-<!-- ║           5. APÊNDICE            ║ -->
+<!-- ║         5. CONCLUSÃO             ║ -->
 <!-- ╚══════════════════════════════════╝ -->
 
-## 5 Apêndice
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-### 5.1 Código — Cálculo dos Cp's e Cd, e geração dos gráficos
+## 5 Conclusão
+
+O presente trabalho apresentou a formulação teórica e a implementação computacional da análise modal de um shear building de 4 andares por meio da formulação em espaço de estados. A abordagem adotada permite obter, de forma direta e sistemática, as frequências naturais e as formas modais do sistema pela decomposição em autovalores da matriz de estado $\mathbf{Q}$.
+
+A montagem das matrizes por assembleagem de elementos locais, inspirada no MEF, confere ao código uma estrutura parametrizada e extensível para estruturas com número arbitrário de andares ou parâmetros não uniformes. A formulação em espaço de estados, por sua vez, é diretamente aplicável ao caso com amortecimento geral — sem a hipótese de proporcionalidade —, bastando fornecer a matriz $\mathbf{C}$ adequada para que os autovalores passem a apresentar parte real negativa, permitindo a extração das razões de amortecimento modais $\zeta_r$.
+
+Os resultados numéricos obtidos para o caso base unitário são consistentes com os valores analíticos esperados para o problema, com 4 pares de autovalores puramente imaginários posicionados sobre o eixo imaginário do plano complexo, confirmando o caráter conservativo do sistema modelado. Como perspectivas de continuidade, propõe-se a extensão do modelo para incluir amortecimento de Rayleigh, excitação harmônica e sísmica de base, e a comparação dos resultados com simulações em ambiente Simcenter Femap.
+
+</div>
+
+---
+
+<!-- ╔══════════════════════════════════╗ -->
+<!-- ║          6. APÊNDICE             ║ -->
+<!-- ╚══════════════════════════════════╝ -->
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
+
+## 6 Apêndice
+
+### 6.1 Código — Python
 
 ```python
-import pandas as pd
 import numpy as np
-import scipy as sci
-import matplotlib.pyplot as plt
+from numpy.linalg import inv, eig
 
-def Reynolds(rho, v, D, mu):
-    return rho * float(v) * D / mu
+## DEFINIÇÕES
+m1, m2, m3, m4 = 1, 1, 1, 1
+k1, k2, k3, k4 = 1, 1, 1, 1
 
-def Cp_analitico(theta):
-    return 2 * np.cos(2 * theta) - 1
+## VETOR DE MASSAS E NÚMERO DE GRAUS DE LIBERDADE
+m_n = np.array([m1, m2, m3, m4])
+n_massas = len(m_n)
 
-def Solve(data, v):
-    P_med = []
-    Cp_med = []
-    Desv_pad = []
+## MATRIZES AUXILIARES
+Z = np.zeros([n_massas, n_massas])
+I = np.identity(n_massas)
 
-    for col in data:
-        P_med.append(data[col].mean())  # Obtendo os valores médios de pressão
+## MATRIZ DE MASSA
+M = np.diag(m_n)
 
-    rho = densidade(P_med[0], v)  # Cálculo da densidade do ar
+## MATRIZ DE AMORTECIMENTO (sistema não amortecido)
+C = Z
 
-    for col in data:
-        Cp = []
-        for i in range(len(data)):
-            Cp.append(2 * data.loc[i, col] / (rho * float(v)**2))
-        Cp_med.append(np.mean(Cp))
-        Desv_pad.append(np.std(Cp))
+## CONECTIVIDADE — [nó_i, nó_j] de cada mola
+conectividade = np.array([[0, 1],
+                          [1, 2],
+                          [2, 3],
+                          [3, 4]])
 
-    Cp_med = np.array(Cp_med)
-    Desv_pad = np.array(Desv_pad)
+k_n = np.array([k1, k2, k3, k4])
 
-    return Cp_med, Desv_pad, rho
+## MONTAGEM DA MATRIZ DE RIGIDEZ GLOBAL (n+1 x n+1)
+K = np.zeros([n_massas + 1, n_massas + 1])
 
-def densidade(p, v):
-    rho = 2 * p / float(v)**2
-    print("Densidade do ar " + v + " m/s = ", rho)
-    return rho
+for k, elemento in zip(k_n, conectividade):
+    k_local = np.array([[ k, -k],
+                        [-k,  k]])
+    K[np.ix_(elemento, elemento)] += k_local
 
-def graph(Cp_med, Desv_pad, x_rad, x, v, Re, rho, CD):
-    y_analitico = [Cp_analitico(theta) for theta in x_rad]
-    y_analitico = np.array(y_analitico)
+## APLICAÇÃO DAS CONDIÇÕES DE CONTORNO (base fixa — nó 0)
+total_dof = np.arange(0, n_massas + 1, 1)
+free_dof  = total_dof[1:]
+K = K[np.ix_(free_dof, free_dof)]
 
-    plt.plot(x, y_analitico, color='red', label='Cp analítico')
-    plt.title("Vel = " + v + " m/s", fontweight='bold')
-    plt.ylabel("Cp", rotation=0, labelpad=10, fontweight='bold')
-    plt.xlabel("(°)", fontweight='bold')
-    plt.errorbar(x, Cp_med, Desv_pad, fmt='o', capsize=7,
-                 markersize=4, label='Cp experimental')
-    plt.legend()
-    plt.text(0.025, 0.17, f'rho = {rho:.2f} kg/m³',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.text(0.025, 0.24, f'Re = {Re:.2e}',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.text(0.025, 0.31, f'CD = {CD:.3f}',
-             transform=plt.gca().transAxes, fontsize=10,
-             verticalalignment='bottom', horizontalalignment='left',
-             bbox=dict(boxstyle='round', facecolor='white', alpha=0.5))
-    plt.savefig("Gráfico - " + v + ".png", dpi=300)
-    plt.show()
+## MATRIZ DE ESTADO Q (2n x 2n)
+Q = np.block([[Z,           I          ],
+              [-inv(M) @ K, -inv(M) @ C]])
 
-if __name__ == '__main__':
-    arquivos = ["Vel7.7.csv", "Vel4.1.csv", "Vel1.8.csv"]
-    vel = ["7.7", "4.1", "1.8"]
-    mu = 1.837E-05   # Viscosidade dinâmica [Pa·s]
-    D = 0.15         # Diâmetro do cilindro [m]
+## SOLUÇÃO DO PROBLEMA DE AUTOVALORES
+autovalores, autovetores = eig(Q)
 
-    for adress, v in zip(arquivos, vel):
-        data = pd.read_csv(adress)
-        theta = [float(d.removesuffix('°')) for d in data]
-        theta_rad = np.deg2rad(theta)
+## EXTRAÇÃO DAS FREQUÊNCIAS NATURAIS
+omega = np.sort(np.unique(np.round(np.abs(autovalores.imag), 6)))
+omega = omega[omega > 1e-10]
 
-        Cp_medio, Desvio_padrao, rho = Solve(data, v)
-        Re = Reynolds(rho, v, D, mu)
-        print("Re = ", format(Re, ".2e"))
-
-        CD = sci.integrate.trapezoid(Cp_medio * np.cos(theta_rad), theta_rad)
-        print("CD " + v + " m/s = ", CD, "\n")
-
-        graph(Cp_medio, Desvio_padrao, theta_rad, theta, v, Re, rho, CD)
+print("Frequências naturais (rad/s):", omega)
+print("Frequências naturais (Hz):   ", omega / (2 * np.pi))
+print("Períodos (s):                ", (2 * np.pi) / omega)
 ```
+
+</div>
 
 ---
 
 <!-- ╔══════════════════════════════════╗ -->
-<!-- ║          6. REFERÊNCIAS          ║ -->
+<!-- ║         7. REFERÊNCIAS           ║ -->
 <!-- ╚══════════════════════════════════╝ -->
 
-<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.8;">
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; text-align: justify; line-height: 1.5;">
 
-## 6 Referências
+## 7 Referências
 
-ANDERSON, J. **Fundamentals of Aerodynamics**. McGraw-Hill Companies, 2017. (McGraw-Hill Aeronautical and Aerospace Engineering Series). ISBN 9780070016804.
+CHOPRA, A. K. *Dynamics of Structures: Theory and Applications to Earthquake Engineering*. 5. ed. Hoboken: Pearson, 2017.
 
-MUNSON, B.; OKIISHI, T.; YOUNG, D. **Fundamentos da mecânica dos fluidos**. Edgard Blucher, 1997. ISBN 9788521201427.
+CLOUGH, R. W.; PENZIEN, J. *Dynamics of Structures*. 3. ed. Berkeley: Computers & Structures, 2003.
 
-SADRAEY, M. **Aircraft Performance: An Engineering Approach**. CRC Press, 2017. ISBN 9781498776554.
+EWINS, D. J. *Modal Testing: Theory, Practice and Application*. 2. ed. Baldock: Research Studies Press, 2000.
+
+INMAN, D. J. *Engineering Vibration*. 4. ed. Upper Saddle River: Pearson, 2014.
 
 </div>
