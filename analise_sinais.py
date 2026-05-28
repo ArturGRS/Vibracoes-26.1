@@ -43,7 +43,8 @@ class AnalisadorVibracao:
         para o intervalo float [-1.0, 1.0], mantendo-os na memória.
         """
         print(f"[{self.__class__.__name__}] Lendo dados de: {self.arquivo_excel.name}")
-        df = pd.read_excel(self.arquivo_excel)
+        #df = pd.read_excel(self.arquivo_excel)
+        df = pd.read_csv(self.arquivo_excel)
 
         for eixo, nome_coluna in self._mapa_colunas.items():
             if nome_coluna in df.columns:
