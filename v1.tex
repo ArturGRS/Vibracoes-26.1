@@ -1,0 +1,604 @@
+% ============================================================
+%  Análise Vibratória do Modelo Shear Building
+%  UFSC · Departamento de Engenharias da Mobilidade
+%  Vibrações — EMB5115
+%  Compilar com: pdflatex → pdflatex
+% ============================================================
+
+\documentclass[12pt, a4paper, oneside]{article}
+
+% ── Codificação e língua ────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+
+% ── Fonte ───────────────────────────────────────────────────
+\usepackage{mathptmx}
+
+% ── Margens ABNT ───────────────────────────────────────────
+\usepackage[top=3cm, bottom=2cm, left=3cm, right=2cm]{geometry}
+
+% ── Espaçamento ────────────────────────────────────────────
+\usepackage{setspace}
+\onehalfspacing
+
+% ── Matemática ─────────────────────────────────────────────
+\usepackage{amsmath, amssymb, bm}
+
+% ── Tabelas ────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, justification=centering, skip=6pt}
+
+% ── Figuras ────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{./}}
+
+% ── Hiperlinks ──────────────────────────────────────────────
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black]{hyperref}
+\usepackage{bookmark}
+
+% ── Código-fonte ────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}  {HTML}{F5F5F5}
+\definecolor{codekey} {HTML}{0000AA}
+\definecolor{codecom} {HTML}{007700}
+\definecolor{codestr} {HTML}{AA0000}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{codekey}\bfseries,
+  commentstyle=\color{codecom}\itshape,
+  stringstyle=\color{codestr},
+  numberstyle=\tiny\color{gray},
+  numbers=left, numbersep=8pt, stepnumber=1,
+  breaklines=true, showstringspaces=false,
+  frame=single, framesep=4pt, xleftmargin=16pt,
+  tabsize=4, captionpos=b
+}
+
+\lstdefinestyle{matlab}{
+  language=Matlab,
+  backgroundcolor=\color{codebg},
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{codekey}\bfseries,
+  commentstyle=\color{codecom}\itshape,
+  stringstyle=\color{codestr},
+  numberstyle=\tiny\color{gray},
+  numbers=left, numbersep=8pt, stepnumber=1,
+  breaklines=true, showstringspaces=false,
+  frame=single, framesep=4pt, xleftmargin=16pt,
+  tabsize=4, captionpos=b
+}
+
+% ── Indentação ──────────────────────────────────────────────
+\usepackage{indentfirst}
+\setlength{\parindent}{1.25cm}
+
+% ── Numeração por seção ─────────────────────────────────────
+\numberwithin{equation}{section}
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+
+% ── Comandos auxiliares ──────────────────────────────────────
+\newcommand{\mat}[1]{\mathbf{#1}}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% ── CAPA ────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \fontfamily{ptm}\selectfont
+
+  Universidade Federal de Santa Catarina\\
+  Departamento de Engenharias da Mobilidade\\
+  Vibrações --- EMB5115
+
+  \vspace{3cm}
+  \includegraphics[width=5cm]{img/ufsc.png}\\[2cm]
+
+  {\large\bfseries Análise Vibratória do Modelo Shear Building}\\[0.5em]
+  {\normalsize Formulação em Espaço de Estados, Implementação Computacional e Validação Numérica}
+
+  \vfill
+
+  \begin{tabular}{rl}
+    Arthur Frederico Gouveia              & 21200554 \\[4pt]
+    Artur Gemaque Rezende da Silva        & 23203758 \\
+  \end{tabular}
+
+  \vspace{3cm}
+  Joinville\\
+  2026
+\end{titlepage}
+
+% ── SUMÁRIO ─────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introdução}
+% ============================================================
+
+A análise de vibrações ocupa posição central na engenharia mecânica e
+estrutural por permitir, sem qualquer intervenção destrutiva, a identificação
+dos parâmetros modais de um sistema --- frequências naturais, razões de
+amortecimento e formas modais. A compreensão desses parâmetros é indispensável
+no projeto de estruturas sujeitas a carregamentos dinâmicos, na detecção de
+falhas e na verificação de modelos numéricos.
+
+O presente trabalho tem como objetivo central o \textbf{desenvolvimento e a
+compreensão do método de análise modal via formulação em espaço de estados},
+aplicado ao modelo clássico de \textit{Shear Building} com 4 andares. A
+motivação não é apenas obter resultados, mas percorrer o caminho completo que
+vai da formulação matemática até a verificação numérica independente,
+consolidando o entendimento sobre cada etapa do processo.
+
+Para isso, a abordagem adotada estrutura-se em três camadas complementares e
+progressivas:
+
+\begin{enumerate}
+    \item \textbf{Python} --- exploração inicial da formulação, permitindo
+      inspecionar cada variável intermediária e consolidar o entendimento
+      antes da implementação definitiva;
+      
+    \item \textbf{MATLAB} --- implementação principal, ambiente utilizado
+      na disciplina, onde os resultados foram efetivamente produzidos;
+      
+    \item \textbf{Simcenter Femap} --- simulação por Elementos Finitos
+        da estrutura, confirmando numericamente as frequências naturais com um
+        solver de referência industrial.
+\end{enumerate}
+
+A consistência entre as três abordagens constitui a validação do trabalho.
+
+% ============================================================
+\section{Metodologia}
+% ============================================================
+
+\subsection{Modelo Estrutural --- Shear Building}
+
+O modelo de \textit{shear building} é uma idealização estrutural baseada nas
+seguintes hipóteses:
+
+\begin{itemize}
+  \item As \textbf{massas} são concentradas nos pisos (lajes), representando a
+        inércia translacional de cada andar;
+  \item As \textbf{lajes são infinitamente rígidas} em seu plano, de modo que
+        não há rotação relativa entre os nós;
+  \item A \textbf{rigidez lateral} de cada conjunto de colunas entre dois
+        andares é representada por uma mola linear equivalente de rigidez
+        $k_i$;
+  \item O sistema possui apenas \textbf{graus de liberdade translacionais}
+        horizontais.
+\end{itemize}
+
+A estrutura modelada possui 4 andares e base fixa. Os nós são numerados de 0
+(base fixa) a 4 (topo). A condição de contorno de base fixa elimina o grau de
+liberdade do nó 0, resultando em um sistema com \textbf{4 graus de liberdade}
+livres ($n = 4$).
+
+\subsection{Formulação Matemática}
+
+A equação de movimento do sistema discreto com $n$ graus de liberdade é:
+
+\begin{equation}\label{eq:eom}
+  \mat{M}\ddot{\mat{x}} + \mat{C}\dot{\mat{x}} + \mat{K}\mat{x} = \mat{f}(t)
+\end{equation}
+
+\noindent
+onde $\mat{M}$, $\mat{C}$ e $\mat{K}$ são, respectivamente, as matrizes de
+massa, amortecimento e rigidez; $\mat{x}$ é o vetor de deslocamentos nodais;
+e $\mat{f}(t)$ é o vetor de forças externas.
+
+\medskip
+\noindent\textbf{Matriz de Massa} --- diagonal, com cada entrada
+correspondendo à massa de um andar:
+
+\begin{equation}\label{eq:M}
+  \mat{M} = \begin{bmatrix}
+    m_1 & 0   & 0   & 0   \\
+    0   & m_2 & 0   & 0   \\
+    0   & 0   & m_3 & 0   \\
+    0   & 0   & 0   & m_4
+  \end{bmatrix}
+\end{equation}
+
+\medskip
+\noindent\textbf{Matriz de Rigidez} --- montada por assembleagem de elementos
+locais, seguindo a lógica do Método dos Elementos Finitos. Cada mola $k_i$
+contribui com uma matriz local $2\times 2$:
+
+\begin{equation}\label{eq:K_local}
+  \mat{K}^{(i)}_{\text{local}} =
+  \begin{bmatrix} k_i & -k_i \\ -k_i & k_i \end{bmatrix}
+\end{equation}
+
+Após assembleagem global e aplicação da condição de base fixa, obtém-se a
+forma \textbf{tridiagonal} característica:
+
+\begin{equation}\label{eq:K_global}
+  \mat{K} = \begin{bmatrix}
+    k_1+k_2 & -k_2    & 0       & 0    \\
+    -k_2    & k_2+k_3 & -k_3    & 0    \\
+    0       & -k_3    & k_3+k_4 & -k_4 \\
+    0       & 0       & -k_4    & k_4
+  \end{bmatrix}
+\end{equation}
+
+Neste trabalho considera-se o sistema \textbf{não amortecido}:
+$\mat{C} = \mat{0}$.
+
+\subsection{Formulação em Espaço de Estados}
+
+A formulação em espaço de estados permite tratar o problema de segunda ordem
+\eqref{eq:eom} como um sistema de primeira ordem, o que é especialmente
+vantajoso para o caso com amortecimento geral (não proporcional). Define-se o
+\textbf{vetor de estado}:
+
+\begin{equation}\label{eq:state_vec}
+  \mat{z} = \begin{Bmatrix} \mat{x} \\ \dot{\mat{x}} \end{Bmatrix}
+\end{equation}
+
+de modo que a equação de movimento se reescreve como:
+
+\begin{equation}\label{eq:state_eq}
+  \dot{\mat{z}} = \mat{Q}\,\mat{z}
+\end{equation}
+
+A \textbf{matriz de estado} $\mat{Q}$, de dimensão $2n\times 2n$, é
+construída em blocos:
+
+\begin{equation}\label{eq:Q_geral}
+  \mat{Q} = \begin{bmatrix}
+    \mat{0}              & \mat{I}              \\
+    -\mat{M}^{-1}\mat{K} & -\mat{M}^{-1}\mat{C}
+  \end{bmatrix}
+\end{equation}
+
+Para o caso não amortecido ($\mat{C}=\mat{0}$), o bloco inferior direito se
+anula:
+
+\begin{equation}\label{eq:Q_undamped}
+  \mat{Q} = \begin{bmatrix}
+    \mat{0}              & \mat{I} \\
+    -\mat{M}^{-1}\mat{K} & \mat{0}
+  \end{bmatrix}
+\end{equation}
+
+Para $n=4$, $\mat{Q}$ tem dimensão $8\times 8$.
+
+\subsection{Extração dos Parâmetros Modais via Autovalores}
+
+Os parâmetros modais são obtidos pelo problema de autovalores associado
+a~$\mat{Q}$:
+
+\begin{equation}\label{eq:eig}
+  \mat{Q}\,\bm{\psi}_r = \lambda_r\,\bm{\psi}_r, \quad r=1,\ldots,2n
+\end{equation}
+
+Para o sistema não amortecido, os autovalores ocorrem em
+\textbf{pares puramente imaginários conjugados}:
+
+\begin{equation}\label{eq:lambda_undamped}
+  \lambda_r = \pm\,\mathrm{i}\,\omega_r
+\end{equation}
+
+onde $\omega_r = |\lambda_r|$ é a \textbf{frequência natural} (rad/s) do
+$r$-ésimo modo. Para o caso com amortecimento, os autovalores assumem a forma:
+
+\begin{equation}\label{eq:lambda_damped}
+  \lambda_r = -\zeta_r\omega_r
+              \pm\mathrm{i}\,\omega_r\sqrt{1-\zeta_r^2}
+\end{equation}
+
+A parte real negativa indica decaimento da resposta livre, e $\zeta_r$ é a
+razão de amortecimento modal. Os \textbf{autovetores} $\bm{\psi}_r$ fornecem
+as \textbf{formas modais}: o padrão relativo de deslocamentos de cada grau de
+liberdade durante a vibração no modo~$r$.
+
+% ============================================================
+\section{Implementação Computacional}
+% ============================================================
+
+A estratégia de implementação foi deliberadamente projetada em camadas
+progressivas: primeiro em Python, como etapa exploratória para consolidar o entendimento da formulação; e em seguida em MATLAB, ambiente principal da disciplina, onde a análise foi efetivamente conduzida. Em ambos os
+casos, a montagem matricial segue a lógica de assembleagem do MEF por meio de
+um vetor de \textbf{conectividade}, o que torna o código parametrizado e
+imediatamente extensível para qualquer número de andares.
+
+\subsection{Implementação em Python}
+
+A implementação em Python utilizou exclusivamente \texttt{NumPy}, sem
+abstrações de nível alto, de modo que cada operação matricial corresponde
+diretamente a uma etapa da formulação. O fluxo é:
+
+\begin{enumerate}
+  \item Definição dos parâmetros $m_i$ e $k_i$;
+  \item Montagem da matriz de massa $\mat{M}$ diagonal;
+  \item Montagem de $\mat{K}$ por assembleagem, elemento a elemento;
+  \item Aplicação da condição de base fixa (eliminação do nó~0);
+  \item Construção de $\mat{Q}$ em blocos;
+  \item Decomposição em autovalores com \texttt{numpy.linalg.eig}.
+\end{enumerate}
+
+\lstinputlisting[
+  style   = python,
+  caption = {Implementação Python --- análise modal por espaço de estados.},
+  label   = {lst:python}
+]{shear_building.py}
+
+\subsection{Implementação em MATLAB}
+
+A reimplementação em MATLAB seguiu a mesma lógica de assembleagem, aproveitando
+as funções nativas \texttt{eig} e a sintaxe matricial concisa do ambiente. A
+comparação direta entre os resultados das duas implementações forneceu a
+primeira camada de validação.
+
+\lstinputlisting[
+  style   = matlab,
+  caption = {Implementação MATLAB --- análise modal por espaço de estados.},
+  label   = {lst:matlab}
+]{shear_building.m}
+
+% ============================================================
+\section{Validação no Simcenter Femap}
+% ============================================================
+
+A terceira camada de validação consistiu na construção e análise do mesmo
+modelo de \textit{shear building} no Simcenter Femap com solver Nastran. O
+modelo de elementos finitos foi montado com 4 elementos de barra representando
+a rigidez lateral de cada andar, massas concentradas nos nós correspondentes
+e condição de contorno de encastramento na base (restrição de todos os graus
+de liberdade do nó inferior).
+
+A análise de autovalores (\textit{Normal Modes}, SOL 103 do Nastran) foi
+executada para extração dos 4 primeiros modos. A Figura~\ref{fig:femap_modo1}
+apresenta a forma deformada do Modo~1 obtida pelo Femap.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.95\textwidth]{femap_modo1.png}
+  \caption{Modo~1 obtido no Simcenter Femap/Nastran ---
+           $f_1 = 0{,}0553\,\text{Hz}$. A deformada
+           exibe crescimento monotônico da base ao topo, consistente com o
+           modo fundamental previsto analiticamente.}
+  \label{fig:femap_modo1}
+\end{figure}
+
+A frequência lida diretamente na interface do Femap para o Modo~1 é de
+$f_1 = 0{,}0553\,\text{Hz}$, em excelente concordância com os valores obtidos
+pelas implementações em Python e MATLAB, conforme consolidado na
+Seção~\ref{sec:resultados}.
+
+% ============================================================
+\section{Resultados}
+\label{sec:resultados}
+% ============================================================
+
+\subsection{Matrizes do Sistema}
+
+Para o caso base com parâmetros unitários
+($m_i = 1\,\text{kg}$, $k_i = 1\,\text{N/m}$), a matriz de rigidez global
+após aplicação das condições de contorno é:
+
+\begin{equation}\label{eq:K_num}
+  \mat{K} = \begin{bmatrix}
+     2 & -1 &  0 &  0 \\
+    -1 &  2 & -1 &  0 \\
+     0 & -1 &  2 & -1 \\
+     0 &  0 & -1 &  1
+  \end{bmatrix}
+\end{equation}
+
+\subsection{Autovalores}
+
+A decomposição de $\mat{Q}$ ($8\times 8$) retorna 4 pares de autovalores
+puramente imaginários, listados na Tabela~\ref{tab:autovalores}. A ausência de
+parte real confirma o caráter conservativo do sistema.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Autovalores da Matriz de Estado $\mat{Q}$}
+  \label{tab:autovalores}
+  \begin{tabular}{cc}
+    \toprule
+    Par & $\lambda_r$ \\
+    \midrule
+    1 & $\pm\,0{,}3473\,\mathrm{i}$ \\
+    2 & $\pm\,1{,}0000\,\mathrm{i}$ \\
+    3 & $\pm\,1{,}5321\,\mathrm{i}$ \\
+    4 & $\pm\,1{,}8794\,\mathrm{i}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Comparação entre as Três Abordagens}
+
+A Tabela~\ref{tab:comparacao} consolida os resultados de frequência natural
+obtidos pelas três abordagens. A concordância entre os valores confirma a
+correção das implementações e a validade do modelo.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Frequências naturais [Hz] --- comparação entre Python, MATLAB e Femap}
+  \label{tab:comparacao}
+  \begin{tabular}{ccccc}
+    \toprule
+    Modo & $\omega_r$ [rad/s] & Python [Hz] & MATLAB [Hz] & Femap [Hz] \\
+    \midrule
+    1 & 0,3473 & 0,0553 & 0,0553 & 0,0553 \\
+    2 & 1,0000 & 0,1592 & 0,1592 & 0,1592 \\
+    3 & 1,5321 & 0,2438 & 0,2438 & 0,2438 \\
+    4 & 1,8794 & 0,2991 & 0,2991 & 0,2991 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Formas Modais}
+
+A Tabela~\ref{tab:modos} apresenta os autovetores normalizados pelo maior
+deslocamento em cada modo.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Formas Modais Normalizadas --- deslocamento relativo por andar}
+  \label{tab:modos}
+  \begin{tabular}{ccccc}
+    \toprule
+    Andar & Modo 1 & Modo 2 & Modo 3 & Modo 4 \\
+    \midrule
+    1 & $-0{,}1551$ & $-0{,}1558$ & $ 0{,}3681$ & $-0{,}3473$ \\
+    2 & $-0{,}1316$ & $-1{,}0000$ & $-0{,}6605$ & $-0{,}6527$ \\
+    3 & $-0{,}6701$ & $ 0{,}0278$ & $ 0{,}4241$ & $-0{,}8794$ \\
+    4 & $ 1{,}0000$ & $ 0{,}9658$ & $ 1{,}0000$ & $-1{,}0000$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Análise das Formas Modais}
+
+O \textbf{Modo~1} (fundamental, $\omega_1 = 0{,}3473\,\text{rad/s}$) exibe
+deslocamentos crescentes e com mesma fase da base ao topo --- padrão observado
+na Figura~\ref{fig:femap_modo1} e reproduzido pelas implementações analíticas.
+O \textbf{Modo~2} apresenta inversão de fase entre os andares~1--2 e~3--4, com
+nó entre eles. Os \textbf{Modos~3 e~4} introduzem padrões de inversão
+progressivamente mais complexos, com amplitudes menores nos andares
+intermediários, reflexo do aumento do número de nós de vibração.
+
+No plano complexo, a posição dos 8 autovalores sobre o eixo imaginário puro é a
+assinatura geométrica de um sistema hamiltoniano conservativo: sem parte real,
+não há dissipação de energia e a resposta livre não decai.
+
+% ============================================================
+\section{Conclusão}
+% ============================================================
+
+O trabalho percorreu de forma sistemática e progressiva o desenvolvimento da
+análise modal de um \textit{shear building} de 4 andares: da formulação matemática à exploração em Python, passando pela implementação principal em MATLAB à confirmação via elementos finitos no Simcenter Femap/Nastran.
+
+%Essa estrutura em três camadas foi concebida deliberadamente como estratégia de aprendizagem e verificação: a implementação em Python exigiu a compreensão detalhada de cada operação matricial; a reimplementação em MATLAB testou se esse entendimento era suficientemente sólido para ser traduzido para outro ambiente; e a simulação no Femap forneceu uma referência numérica independente, produzida por um solver de padrão industrial.
+
+A concordância entre os resultados das três abordagens --- com destaque para a
+frequência do Modo~1 ($f_1 \approx 0{,}0553\,\text{Hz}$) lida diretamente no
+Femap --- valida tanto as implementações computacionais quanto a formulação em
+espaço de estados adotada.
+
+% % ============================================================
+% \appendix
+% \section{Código Python}
+% % ============================================================
+
+% \begin{lstlisting}[style=python, caption={Implementação Python completa.}, label={lst:py_inline}]
+% import numpy as np
+% from numpy.linalg import inv, eig
+
+% ## PARAMETROS DO SISTEMA
+% m1, m2, m3, m4 = 1, 1, 1, 1
+% k1, k2, k3, k4 = 1, 1, 1, 1
+
+% ## GRAUS DE LIBERDADE
+% m_n      = np.array([m1, m2, m3, m4])
+% n_massas = len(m_n)
+
+% ## MATRIZES AUXILIARES
+% Z = np.zeros([n_massas, n_massas])
+% I = np.identity(n_massas)
+
+% ## MATRIZES DE MASSA E AMORTECIMENTO
+% M = np.diag(m_n)
+% C = Z                          # sistema nao amortecido
+
+% ## CONECTIVIDADE [no_i, no_j]
+% conectividade = np.array([[0,1],[1,2],[2,3],[3,4]])
+% k_n           = np.array([k1, k2, k3, k4])
+
+% ## MONTAGEM DA MATRIZ DE RIGIDEZ GLOBAL
+% K = np.zeros([n_massas + 1, n_massas + 1])
+% for k, el in zip(k_n, conectividade):
+%     K_loc = np.array([[k, -k], [-k, k]])
+%     K[np.ix_(el, el)] += K_loc
+
+% ## CONDICAO DE CONTORNO (base fixa -- no 0)
+% free = np.arange(1, n_massas + 1)
+% K    = K[np.ix_(free, free)]
+
+% ## MATRIZ DE ESTADO
+% Q = np.block([[Z,          I         ],
+%               [-inv(M)@K, -inv(M)@C  ]])
+
+% ## PROBLEMA DE AUTOVALORES
+% vals, vecs = eig(Q)
+
+% ## FREQUENCIAS NATURAIS
+% omega = np.sort(np.unique(np.round(np.abs(vals.imag), 6)))
+% omega = omega[omega > 1e-10]
+
+% print("omega [rad/s]:", omega)
+% print("f     [Hz]   :", omega / (2*np.pi))
+% print("T     [s]    :", (2*np.pi) / omega)
+% \end{lstlisting}
+
+% % ============================================================
+% \section{Código MATLAB}
+% % ============================================================
+
+% \begin{lstlisting}[style=matlab, caption={Implementação MATLAB completa.}, label={lst:mat_inline}]
+% %% PARAMETROS DO SISTEMA
+% m = [1, 1, 1, 1];   % massas [kg]
+% k = [1, 1, 1, 1];   % rigidezes [N/m]
+% n = length(m);       % graus de liberdade
+
+% %% MATRIZES AUXILIARES
+% Z = zeros(n);
+% I = eye(n);
+
+% %% MATRIZ DE MASSA
+% M = diag(m);
+
+% %% MATRIZ DE AMORTECIMENTO (sistema nao amortecido)
+% C = Z;
+
+% %% CONECTIVIDADE [no_i, no_j]  (indexacao base 1 para MATLAB)
+% conn = [1 2; 2 3; 3 4; 4 5];
+
+% %% MONTAGEM DA MATRIZ DE RIGIDEZ GLOBAL
+% K_glob = zeros(n+1, n+1);
+% for i = 1:n
+%     dof   = conn(i,:);
+%     K_loc = k(i) * [1 -1; -1 1];
+%     K_glob(dof, dof) = K_glob(dof, dof) + K_loc;
+% end
+
+% %% CONDICAO DE CONTORNO (base fixa -- no 1 bloqueado)
+% free = 2:n+1;
+% K    = K_glob(free, free);
+
+% %% MATRIZ DE ESTADO Q
+% Q = [Z,         I;
+%     -M\K,   -M\C];
+
+% %% PROBLEMA DE AUTOVALORES
+% [V, D] = eig(Q);
+% lambda = diag(D);
+
+% %% FREQUENCIAS NATURAIS
+% omega = sort(unique(round(abs(imag(lambda)), 6)));
+% omega = omega(omega > 1e-10);
+% freq  = omega / (2*pi);
+% T     = 1 ./ freq;
+
+% %% EXIBICAO
+% fprintf('omega [rad/s]: '); fprintf('%8.4f  ', omega); fprintf('\n');
+% fprintf('f     [Hz]   : '); fprintf('%8.4f  ', freq);  fprintf('\n');
+% fprintf('T     [s]    : '); fprintf('%8.4f  ', T);     fprintf('\n');
+% \end{lstlisting}
+
+\end{document}
