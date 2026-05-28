@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Tuple
 
 class AnalisadorVibracao:
 
-    def __init__(self, arquivo_excel: str, taxa_amostragem: int = 400):
+    def __init__(self, arquivo_excel: str, taxa_amostragem: int = 100):
         """
         Inicializa o analisador lendo o arquivo Excel e pré-processando os sinais.
         
@@ -32,8 +32,12 @@ class AnalisadorVibracao:
         self._mapa_colunas = {
             "x": "Acceleration x (m/s^2)",
             "y": "Acceleration y (m/s^2)",
-            "z": "Acceleration z (m/s^2)"
+            "z": "Acceleration z (m/s^2)",
+            "x_rad":"Gyroscope x (rad/s)",
+            "y_rad":"Gyroscope y (rad/s)",
+            "z_rad":"Gyroscope z (rad/s)"
         }
+
         
         self._carregar_dados()
 
@@ -87,10 +91,10 @@ class AnalisadorVibracao:
 
     def plotar_analise(self, eixo: str, limite_frequencia: Optional[float] = None) -> None:
         """
-        Plota a forma de onda e o espectrograma do eixo selecionado.
+        Plota a forma de onda e o espectro de frequência (FFT) do eixo selecionado.
         
         :param eixo: Eixo a ser analisado ('x', 'y' ou 'z').
-        :param limite_frequencia: Limite máximo do eixo Y (frequência em Hz) no espectrograma.
+        :param limite_frequencia: Limite máximo do eixo X (frequência em Hz) na FFT.
         """
         eixo = eixo.lower()
         if eixo not in self.sinais:
@@ -98,6 +102,7 @@ class AnalisadorVibracao:
             return
 
         sinal = self.sinais[eixo]
+        n_amostras = len(sinal)
         print(f"[{self.__class__.__name__}] Gerando gráficos para o Eixo {eixo.upper()}...")
 
         plt.figure(figsize=(15, 5))
@@ -109,23 +114,38 @@ class AnalisadorVibracao:
         plt.xlabel("Tempo (s)")
         plt.ylabel("Amplitude Normalizada")
 
-        # --- Gráfico 2: Espectrograma ---
+        # --- Gráfico 2: Espectro de Frequência (FFT) ---
         plt.subplot(1, 2, 2)
-        stft = lb.stft(sinal)
-        espectrograma = lb.amplitude_to_db(np.abs(stft), ref=np.max)
+
+        # Cálculo da FFT
+        frequencias = np.fft.rfftfreq(n_amostras, d=1.0/self.taxa_amostragem)
+        espectro_amplitude = np.abs(np.fft.rfft(sinal))
         
-        img = lb.display.specshow(
-            espectrograma, 
-            x_axis='time', 
-            y_axis='linear', 
-            sr=self.taxa_amostragem
+        # Encontra e marca os picos principais para facilitar a visualização
+        limite_ruido = np.max(espectro_amplitude) * 0.05
+        picos_indices, _ = find_peaks(
+            espectro_amplitude, 
+            height=limite_ruido, 
+            distance=int(n_amostras / self.taxa_amostragem)
         )
-        plt.colorbar(img, format="%+2.0f dB")
-        plt.title(f"Eixo {eixo.upper()}: Espectrograma")
         
-        # --- NOVO: Aplica o limite de frequência no Eixo Y ---
+        plt.plot(frequencias, espectro_amplitude, color='black', alpha=0.7, label="Espectro")
+        
+        # Destaca os picos no gráfico por cima da linha
+        plt.plot(frequencias[picos_indices], espectro_amplitude[picos_indices], "x", color='red', markersize=8, label="Picos/Modos")
+        
+        plt.title(f"Espectro de Frequência (FFT) - Eixo {eixo.upper()}")
+        plt.xlabel("Frequência (Hz)")
+        plt.ylabel("Amplitude")
+        
+        # Limita o eixo X se o usuário quiser focar nas baixas frequências (ex: 0 a 50 Hz)
         if limite_frequencia is not None:
-            plt.ylim(0, limite_frequencia)
+            plt.xlim(0, limite_frequencia)
+            
+        plt.grid(True, linestyle='--', alpha=0.6)
+        
+        # Adiciona a legenda para identificar a linha e os picos
+        plt.legend()
 
         plt.tight_layout()
         plt.show()
@@ -182,78 +202,3 @@ class AnalisadorVibracao:
         print("-" * 45)
         return resultados
 
-    def plotar_fft(self, eixo: str, limite_frequencia: Optional[float] = None) -> None:
-        """
-        Calcula e plota o gráfico do espectro de frequências (FFT) do sinal.
-        
-        :param eixo: Eixo a ser analisado ('x', 'y' ou 'z').
-        :param limite_frequencia: Limite máximo do eixo X no gráfico (em Hz). 
-                                  Se None, mostra até a frequência de Nyquist.
-        """
-        eixo = eixo.lower()
-        if eixo not in self.sinais:
-            print(f"Erro: Dados do eixo '{eixo}' não estão disponíveis.")
-            return
-
-        print(f"[{self.__class__.__name__}] Gerando gráfico da FFT para o Eixo {eixo.upper()}...")
-        sinal = self.sinais[eixo]
-        n_amostras = len(sinal)
-        
-        # Cálculo da FFT
-        frequencias = np.fft.rfftfreq(n_amostras, d=1.0/self.taxa_amostragem)
-        espectro_amplitude = np.abs(np.fft.rfft(sinal))
-        
-        # Criação do gráfico
-        plt.figure(figsize=(10, 5))
-        plt.plot(frequencias, espectro_amplitude, color='purple', alpha=0.8)
-        
-        # Encontra e marca os picos principais para facilitar a visualização
-        limite_ruido = np.max(espectro_amplitude) * 0.05
-        picos_indices, _ = find_peaks(
-            espectro_amplitude, 
-            height=limite_ruido, 
-            distance=int(n_amostras / self.taxa_amostragem)
-        )
-        
-        # Destaca os picos no gráfico
-        plt.plot(frequencias[picos_indices], espectro_amplitude[picos_indices], "x", color='red', markersize=8, label="Picos/Modos")
-        
-        plt.title(f"Espectro de Frequência (FFT) - Eixo {eixo.upper()}")
-        plt.xlabel("Frequência (Hz)")
-        plt.ylabel("Amplitude")
-        
-        # Limita o eixo X se o usuário quiser focar nas baixas frequências (ex: 0 a 50 Hz)
-        if limite_frequencia is not None:
-            plt.xlim(0, limite_frequencia)
-            
-        plt.grid(True, linestyle='--', alpha=0.6)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-
-# ==========================================
-# Exemplo de Uso (Ponto de Entrada)
-# ==========================================
-if __name__ == "__main__":
-
-    TAXA_AMOSTRAGEM = 400
-    LIMITE_HZ = 20
-    
-    try:
-        Sem_pendulo = AnalisadorVibracao(arquivo_excel="data/Acelerao com g 2026-05-26 09-42-26.xls", taxa_amostragem=TAXA_AMOSTRAGEM)
-        Com_pendulo = AnalisadorVibracao(arquivo_excel="data/Acelerao com g 2026-05-26 09-37-59(Com pêndulo).xls", taxa_amostragem=TAXA_AMOSTRAGEM)
-        
-        for eixo_disponivel in Sem_pendulo.sinais.keys():
-            Sem_pendulo.encontrar_modos_fundamentais(eixo=eixo_disponivel, top_n=5)
-            Com_pendulo.encontrar_modos_fundamentais(eixo=eixo_disponivel, top_n=5)        
-            
-            Sem_pendulo.plotar_analise(eixo=eixo_disponivel, limite_frequencia=LIMITE_HZ)
-            Com_pendulo.plotar_analise(eixo=eixo_disponivel, limite_frequencia=LIMITE_HZ)            
-            
-            Sem_pendulo.plotar_fft(eixo=eixo_disponivel, limite_frequencia=LIMITE_HZ)
-            Com_pendulo.plotar_fft(eixo=eixo_disponivel, limite_frequencia=LIMITE_HZ)
-        
-
-    except FileNotFoundError:
-        print("Arquivo de teste não encontrado. Verifique o caminho.")
