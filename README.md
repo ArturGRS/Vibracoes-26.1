@@ -25,10 +25,29 @@ resultados/
 
 ## Roadmap 
 
-- [ ] Realizar os experimentos do Shear Build
+# O que precisamos retirar de dentro dos experimentos
 
-  1. Realizar a captação utilizando **Phyphox**
-  2. Repetir 3 vezes por experimento 
+- Modos
+- Frequências
+- Amortecimento do sistema
+
+### Frederico 
+
+  [ ] Encontrar a taxa de amortecimento
+  [ ] Escrever a parte sobre o experimento
+  [ ] Implementação do amortecimento no modelo analitico e na simulação
+
+### Gemaque
+
+  [ ] Suavizar o gráfico
+  [ ] Gerar os gráficos do relatório
+      - fft... tudo junto no mesmo gráfico (um para aceleremotro e outro para giroscópio)
+  [ ] Calcular o tamanho do pêndulo
+
+### Coisas que precisamos fazer juntos
+  [ ] Realizar os experimentos do Shear Build
+    1. Realizar a captação utilizando **Phyphox**
+    2. Repetir 5 vezes por experimento (pra garantir)
 
 - [ ] Extrair parâmetros modais experimentais. Rodar FFT dos 3 ensaios; frequências de pico = modos medidos. Comparar **deslocamento-livre × deslocamento-atenuado** para evidenciar o efeito do pêndulo/absorvedor de vibração. Tratar a *torção-livre* como caso à parte (modo fora do shear building puro).
 
