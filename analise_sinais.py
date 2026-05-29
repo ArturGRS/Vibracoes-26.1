@@ -65,29 +65,6 @@ class AnalisadorVibracao:
                 self.sinais[eixo] = sinal_normalizado
                 print(f"  -> Eixo {eixo.upper()} carregado com sucesso ({len(sinal)} amostras).")
 
-    def exportar_para_wav(self, diretorio_saida: str = ".") -> List[Path]:
-        """
-        Converte os sinais armazenados em memória para arquivos WAV de 16-bit PCM.
-        
-        :param diretorio_saida: Pasta onde os arquivos serão salvos.
-        :return: Lista com os caminhos dos arquivos gerados.
-        """
-        dir_out = Path(diretorio_saida)
-        dir_out.mkdir(parents=True, exist_ok=True)
-        arquivos_gerados = []
-
-        for eixo, sinal in self.sinais.items():
-            # Conversão da escala float [-1, 1] para int16
-            audio_data = np.int16(sinal * 32767)
-            
-            nome_arquivo = f"sinal_aceleracao_eixo_{eixo}.wav"
-            caminho_completo = dir_out / nome_arquivo
-            
-            wavfile.write(caminho_completo, self.taxa_amostragem, audio_data)
-            arquivos_gerados.append(caminho_completo)
-            print(f"[{self.__class__.__name__}] Arquivo exportado: {caminho_completo}")
-            
-        return arquivos_gerados
 
     def plotar_analise(self, eixo: str, limite_frequencia: Optional[float] = None) -> None:
         """
