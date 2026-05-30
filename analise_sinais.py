@@ -188,5 +188,8 @@ class AnalisadorVibracao:
             axes[index].grid(True, linestyle='--',alpha=0.5)
             
         plt.tight_layout(rect=[0, 0, 1, 0.96])
-        plt.show()
+        plt.savefig(f"resultados/Sinais/{title}.png", dpi=150, bbox_inches='tight')
+        plt.close()
 
+    def plotar_fft_dos_eixos_selecionados(self,) -> None:
+        ...
