@@ -42,29 +42,22 @@ class AnalisadorVibracao:
         self._carregar_dados()
 
     def _carregar_dados(self) -> None:
-        """
-        Método interno que lê a planilha, limpa NaNs e normaliza os sinais 
-        para o intervalo float [-1.0, 1.0], mantendo-os na memória.
-        """
         print(f"[{self.__class__.__name__}] Lendo dados de: {self.arquivo_excel.name}")
-        df = pd.read_excel(self.arquivo_excel)
-        #df = pd.read_csv(self.arquivo_excel)
+
+        df = pd.read_csv(self.arquivo_excel)
 
         for eixo, nome_coluna in self._mapa_colunas.items():
             if nome_coluna in df.columns:
-                # Extração e limpeza de dados nulos
+
                 sinal = df[nome_coluna].dropna().values.astype(np.float64)
                 
-                # Normalização para a escala [-1.0, 1.0]
                 max_abs_val = np.max(np.abs(sinal))
                 if max_abs_val > 0:
                     sinal_normalizado = sinal / max_abs_val
-                else:
-                    sinal_normalizado = sinal
                     
                 self.sinais[eixo] = sinal_normalizado
-                print(f"  -> Eixo {eixo.upper()} carregado com sucesso ({len(sinal)} amostras).")
 
+                print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
 
     def plotar_analise(self, eixo: str, limite_frequencia: Optional[float] = None) -> None:
         """
@@ -87,7 +80,7 @@ class AnalisadorVibracao:
         # --- Gráfico 1: Forma de Onda ---
         plt.subplot(1, 2, 1)
         lb.display.waveshow(sinal, sr=self.taxa_amostragem, color="blue")
-        plt.title(f"Eixo {eixo.upper()}: Forma de Onda")
+        plt.title(f"Eixo {eixo.lower()}: Forma de Onda")
         plt.xlabel("Tempo (s)")
         plt.ylabel("Amplitude Normalizada")
 
@@ -178,4 +171,22 @@ class AnalisadorVibracao:
             
         print("-" * 45)
         return resultados
+
+    def plotar_todos_os_eixos_do_sinal(self, title) -> None:
+    
+        figure, axes = plt.subplots(len(self.sinais),1,figsize=(7, 7))
+        figure.suptitle(f"{title}", fontsize = 14, fontweight='bold' )
+
+        for index, (eixo_disponivel, sinal) in enumerate(self.sinais.items()):            
+            
+            sinal = self.sinais[eixo_disponivel]
+
+            lb.display.waveshow(sinal, sr=self.taxa_amostragem, color="blue", ax=axes[index])
+            axes[index].set_title(f"Eixo {eixo_disponivel.upper()}: Forma de Onda", fontsize = 11)
+            axes[index].set_xlabel("Tempo (s)")
+            axes[index].set_ylabel("Amplitude Normalizada")
+            axes[index].grid(True, linestyle='--',alpha=0.5)
+            
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
 
