@@ -21,4 +21,6 @@ if __name__ == '__main__':
 
     # exp_1.ver_frequencias(inicio=1.5, fim = 60, limite_frequencia=10)
     # exp_2.ver_frequencias(inicio=3.5,fim=30)
-    exp_3.ver_frequencias(limite_frequencia=10)
+    # exp_3.ver_frequencias(limite_frequencia=10)
+    # exp_1.ver_dados()
+    exp_1.calculo_amortecimento()

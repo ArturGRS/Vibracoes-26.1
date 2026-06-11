@@ -8,7 +8,7 @@ identificação de modos fundamentais.
 from os import path
 import pandas as pd
 import numpy as np
-import librosa as lb
+# import librosa as lb
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks, detrend, butter, filtfilt, coherence
 from pathlib import Path
@@ -75,6 +75,8 @@ class Experimento:
                 print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
         print(f'{'='*a}\n{'='*a}')
 
+        self.t = np.arange(len(sinal)) / self.taxa_amostragem
+
     def ver_dados(self, inicio: float = None, 
                 fim: float = None, 
                 limpar: bool = False, 
@@ -108,7 +110,6 @@ class Experimento:
                 sinal = _limpar_sinais(sinal)
 
             ax = axes[index, 0]
-            t = np.arange(len(sinal)) / self.taxa_amostragem
             ax.plot(t, sinal, color="blue", linewidth=0.5)
             ax.set_title(f"Aceleração Eixo {eixo.upper()}", fontsize=11)
             ax.set_xlabel("Tempo (s)")
@@ -210,4 +211,14 @@ class Experimento:
         else:
             plt.show()
 
-        
+    def calculo_amortecimento(self):
+        indices_tempo_tratado = np.where(self.t >= 1.5)[0]
+        for chave in self.acel_sinais.keys():
+            sinais = self.acel_sinais[chave][indices_tempo_tratado]
+            indice_positivos = np.where(sinais > 0)
+            sinais_positivos = sinais[indice_positivos]
+            decaimento = np.log(sinais_positivos[:-1] / sinais_positivos[1:])
+            taxa_amortecimento = np.average(decaimento /(4*np.pi**2 + decaimento**2)**0.5)
+
+
+            print(taxa_amortecimento)
