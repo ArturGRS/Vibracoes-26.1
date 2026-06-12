@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks, detrend, butter, filtfilt
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 class Experimento:
     
@@ -67,23 +67,23 @@ class Experimento:
         except:
             print('Dá uma olhada na extensão dos arquivos que eles estão erradas')
 
-        a = 60
-        print(f'{'='*a}\n {'Acelerometro': ^30}\n{'='*a}')
+        # a = 60
+        # print(f'{'='*a}\n {'Acelerometro': ^30}\n{'='*a}')
         for eixo, nome_coluna in self._acel_mapa_colunas.items():
 
             if nome_coluna in df_acel.columns:
                 sinal = df_acel[nome_coluna].dropna().values.astype(np.float64)
                 self.acel_sinais[eixo] = sinal
-                print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
+                # print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
 
-        print(f'{'='*a}\n {'Giroscópio': ^30}\n{'='*a}')
+        # print(f'{'='*a}\n {'Giroscópio': ^30}\n{'='*a}')
         for eixo, nome_coluna in self._giro_mapa_colunas.items():
             
             if nome_coluna in df_giro.columns:
                 sinal = df_giro[nome_coluna].dropna().values.astype(np.float64)
                 self.giro_sinais[eixo] = sinal
-                print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
-        print(f'{'='*a}\n{'='*a}')
+                # print(f"  -> Eixo {eixo.lower()} carregado com sucesso ({len(sinal)} amostras).")
+        # print(f'{'='*a}\n{'='*a}')
 
     def explorar_sinal(self, inicio: float = None, 
                 fim: float = None, 
