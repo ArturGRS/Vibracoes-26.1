@@ -43,6 +43,7 @@ resultados/
   [ ] Gerar os gráficos do relatório
       - fft... tudo junto no mesmo gráfico (um para aceleremotro e outro para giroscópio)
   [ ] Calcular o tamanho do pêndulo
+  [ ] Sugestões de como melhorar o trabalho (Pedir para ia se passar pelo professor)
 
 ### Coisas que precisamos fazer juntos
   [ ] Realizar os experimentos do Shear Build
@@ -52,3 +53,36 @@ resultados/
 - [ ] Extrair parâmetros modais experimentais. Rodar FFT dos 3 ensaios; frequências de pico = modos medidos. Comparar **deslocamento-livre × deslocamento-atenuado** para evidenciar o efeito do pêndulo/absorvedor de vibração. Tratar a *torção-livre* como caso à parte (modo fora do shear building puro).
 
 - [ ] Documentar no Overleaf. Nova seção "Validação Experimental" no relatório; incluir `analise_sinais.py` no apêndice de código.
+
+## Extrutura
+
+  ### Introdução
+    - Motivação
+    - Justificativa
+    - Identificação da contribuição... (Como que seu trabalho vai contribuir ao mundo)
+
+  ### Objetivos
+    - Objetivo principal (Caracterização do sistema com 2 graus de liberdade)
+    - Objetivo específico (Vamos aumentando/melhorando ao decorrer do tempo...)
+
+  <!-- Provavelmente é onde eu vou ter mais dúvidas de como organizar -->
+  ### Revisão bibliográfica
+    - Não pode ter o que não está sendo utilizado
+    - Descrição dos subsídios teóricos e experimentais ()
+
+  ### Metodologia = Materias + Métodos
+    - descrição geral
+    - materias - sensores, aparatos, infraestrutura, ilustrar com fotos e utilizar tabelas de sintese de parâmetros/ informações de interesse
+    - metodos - de analise, de simulação, de ensaio, analise estática, processamento de sinais, se necessário usar o apêndice
+
+  ### Resultados
+
+  ### Conclusão
+
+  ### Declarações
+
+  ### Apendicês
+
+  ### Anexos
+
+  ### Referência bibliográfica
