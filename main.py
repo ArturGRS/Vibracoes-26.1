@@ -2,11 +2,7 @@ from experimento import Experimento
 from dados import deslocamento_livre_x, torcao_livre
 
 if __name__ == '__main__':
-
-    
-    deslocamento_livre_x[0].explorar_sinal()
-    deslocamento_livre_x[0].ver_fft()
-    
+ 
     # # --- Extração dos Modos Naturais ---
     print("\n--- Modos Naturais: Deslocamento Livre X ---")
 

@@ -307,3 +307,14 @@ class Experimento:
             modos['giroscopio'][eixo] = [round(float(freqs_comum[i]), 2) for i in picos_idx]
 
         return modos
+
+    def calculo_amortecimento(self):
+        indices_tempo_tratado = np.where(self.t >= 1.5)[0]
+        for chave in self.acel_sinais.keys():
+            sinais = self.acel_sinais[chave][indices_tempo_tratado]
+            indice_positivos = np.where(sinais > 0)
+            sinais_positivos = sinais[indice_positivos]
+            decaimento = np.log(sinais_positivos[:-1] / sinais_positivos[1:])
+            taxa_amortecimento = np.average(decaimento /(4*np.pi**2 + decaimento**2)**0.5)
+
+            print(taxa_amortecimento)
